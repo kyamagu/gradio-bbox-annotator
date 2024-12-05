@@ -8,13 +8,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradio_imageannotator"
-version = "0.0.1"
+version = "0.1.0"
 description = "Bounding box annotation tool"
 readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
-authors = [{ name = "YOUR NAME", email = "YOUREMAIL@domain.com" }]
-keywords = ["gradio-custom-component", "gradio-template-SimpleImage", "image", "annotation", "bbox"]
+authors = [{ name = "Kota Yamaguchi", email = "yamaguchi_kota@cyberagent.co.jp" }]
+keywords = ["gradio-custom-component", "image", "annotation", "bbox"]
 # Add dependencies here
 dependencies = ["gradio>=4.0,<6.0"]
 classifiers = [
@@ -30,12 +30,6 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Artificial Intelligence',
   'Topic :: Scientific/Engineering :: Visualization',
 ]
-
-# The repository and space URLs are optional, but recommended.
-# Adding a repository URL will create a badge in the auto-generated README that links to the repository.
-# Adding a space URL will create a badge in the auto-generated README that links to the space.
-# This will make it easy for people to find your deployed demo or source code when they
-# encounter your project in the wild.
 
 # [project.urls]
 # repository = "your github repository"

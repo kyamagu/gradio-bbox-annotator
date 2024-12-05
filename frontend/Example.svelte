@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { FileData } from "@gradio/client";
+	import type { AnnotatedImage } from "./shared/utils";
 
-	export let value: null | FileData;
+	export let value: null | AnnotatedImage;
 	export let type: "gallery" | "table";
 	export let selected = false;
 </script>
@@ -13,7 +13,7 @@
 		class:gallery={type === "gallery"}
 		class:selected
 	>
-		<img src={value.url} alt="" />
+		<img src={value.image.url} alt="" />
 	</div>
 {/if}
 

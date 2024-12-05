@@ -10,16 +10,16 @@
 	import type { Gradio } from "@gradio/utils";
 	import ImagePreview from "./shared/ImagePreview.svelte";
 	import ImageUploader from "./shared/ImageUploader.svelte";
+	import type { AnnotatedImage } from "./shared/utils";
 
 	import { Block, UploadText } from "@gradio/atoms";
 	import { StatusTracker } from "@gradio/statustracker";
-	import type { FileData } from "@gradio/client";
 	import type { LoadingStatus } from "@gradio/statustracker";
 
 	export let elem_id = "";
 	export let elem_classes: string[] = [];
 	export let visible = true;
-	export let value: null | FileData = null;
+	export let value: null | AnnotatedImage = null;
 	export let label: string;
 	export let show_label: boolean;
 	export let show_download_button: boolean;

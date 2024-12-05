@@ -1,4 +1,4 @@
-"""gr.SimpleImage() component."""
+"""gr.ImageAnnotator() component."""
 
 from __future__ import annotations
 
@@ -10,16 +10,47 @@ from gradio_client import handle_file
 from gradio_client.documentation import document
 
 from gradio.components.base import Component
-from gradio.data_classes import FileData
+from gradio.data_classes import FileData, GradioModel
 from gradio.events import Events
 
 if TYPE_CHECKING:
     from gradio.components import Timer
 
 
+EXAMPLE_IMAGE_URL = (
+    "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png"
+)
+
+
+class Annotation(GradioModel):
+    """Bounding box annotation data."""
+    left: int
+    top: int
+    right: int
+    bottom: int
+    label: str | None
+
+    @property
+    def width(self) -> int:
+        return self.right - self.left
+
+    @property
+    def height(self) -> int:
+        return self.bottom - self.top
+
+
+class AnnotatedImage(GradioModel):
+    """Annotated image data."""
+    image: FileData
+    annotations: list[Annotation]
+
+
+@document()
 class ImageAnnotator(Component):
     """
-    Creates an image component that can be used to upload images (as an input) or display images (as an output).
+    Creates an image component that can be used to upload images with bounding box annotations (as an input)
+    or display images with bounding box annotations (as an output). This component can be used to annotate
+    images.
     """
 
     EVENTS = [
@@ -28,11 +59,14 @@ class ImageAnnotator(Component):
         Events.upload,
     ]
 
-    data_model = FileData
+    data_model = AnnotatedImage
 
     def __init__(
         self,
-        value: str | None = None,
+        value: str
+        | Path
+        | tuple[str | Path, list[tuple[int, int, int, int, str | None]]]
+        | None = None,
         *,
         label: str | None = None,
         every: Timer | float | None = None,
@@ -51,12 +85,12 @@ class ImageAnnotator(Component):
     ):
         """
         Parameters:
-            value: A path or URL for the default value that ImageAnnotator component is going to take. If callable, the function will be called whenever the app loads to set the initial value of the component.
+            value: A path or URL for the image, or a tuple of the image and list of (left, top, right, bottom, label) annotations.
             label: the label for this component, displayed above the component if `show_label` is `True` and is also used as the header if there are a table of examples for this component. If None and used in a `gr.Interface`, the label will be the name of the parameter this component corresponds to.
             every: Continously calls `value` to recalculate it if `value` is a function (has no effect otherwise). Can provide a Timer whose tick resets `value`, or a float that provides the regular interval for the reset Timer.
             inputs: Components that are used as inputs to calculate `value` if `value` is a function (has no effect otherwise). `value` is recalculated any time the inputs change.
             show_label: if True, will display label.
-            show_download_button: If True, will display button to download image.
+            show_download_button: If True, will display button to download annotations.
             container: If True, will place the component in a container - providing some extra padding around the border.
             scale: relative size compared to adjacent Components. For example if Components A and B are in a Row, and A has scale=2, and B has scale=1, A will be twice as wide as B. Should be an integer. scale applies in Rows, and to top-level Components in Blocks where fill_height=True.
             min_width: minimum pixel width, will wrap if not sufficient screen space to satisfy this value. If a certain scale value results in this Component being narrower than min_width, the min_width parameter will be respected first.
@@ -85,32 +119,58 @@ class ImageAnnotator(Component):
             value=value,
         )
 
-    def preprocess(self, payload: FileData | None) -> str | None:
+    def preprocess(
+        self, payload: AnnotatedImage | FileData | None
+    ) -> tuple[str, list[tuple[int, int, int, int, str | None]]] | None:
         """
         Parameters:
-            payload: A FileData object containing the image data.
+            payload: An AnnotatedImage or FileData object containing the image and annotations.
         Returns:
-            A `str` containing the path to the image.
+            A tuple of `str` containing the path to the image and a list of annotations.
         """
         if payload is None:
             return None
-        return payload.path
+        elif isinstance(payload, FileData):
+            return (payload.path, [])
+        return (
+            payload.image.path,
+            [(a.left, a.top, a.right, a.bottom, a.label) for a in payload.annotations],
+        )
 
-    def postprocess(self, value: str | Path | None) -> FileData | None:
+    def postprocess(
+        self,
+        value: str
+        | Path
+        | tuple[str | Path, list[tuple[int, int, int, int, str | None]]]
+        | None,
+    ) -> AnnotatedImage | None:
         """
         Parameters:
-            value: Expects a `str` or `pathlib.Path` object containing the path to the image.
+            value: Expects a `str` or `pathlib.Path` object containing the path to the image, or a tuple of
+                the image and a list of annotations.
         Returns:
-            A FileData object containing the image data.
+            An AnnotatedImage object containing the image and annotation data.
         """
         if value is None:
             return None
-        return FileData(path=str(value), orig_name=Path(value).name)
+        elif isinstance(value, (str, Path)):
+            return AnnotatedImage(
+                image=FileData(path=str(value), orig_name=Path(value).name),
+                annotations=[],
+            )
+        return AnnotatedImage(
+            image=FileData(path=str(value[0]), orig_name=Path(value[0]).name),
+            annotations=[
+                Annotation(left=x[0], top=x[1], right=x[2], bottom=x[3], label=x[4])
+                for x in value[1]
+            ],
+        )
 
     def example_payload(self) -> Any:
-        return handle_file(
-            "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png"
+        return AnnotatedImage(
+            image=handle_file(EXAMPLE_IMAGE_URL),
+            annotations=[Annotation(left=10, top=10, right=51, bottom=58, label="bus")],
         )
 
     def example_value(self) -> Any:
-        return "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png"
+        return (EXAMPLE_IMAGE_URL, [(10, 10, 51, 58, "bus")])
