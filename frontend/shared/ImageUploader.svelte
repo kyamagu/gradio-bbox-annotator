@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher, tick } from "svelte";
-	import { BlockLabel } from "@gradio/atoms";
-	import { Image as ImageIcon } from "@gradio/icons";
+	import { BlockLabel, IconButton, IconButtonWrapper } from "@gradio/atoms";
+	import { Image as ImageIcon, Clear as ClearIcon } from "@gradio/icons";
 
 	import { Upload } from "@gradio/upload";
 	import type { FileData, Client } from "@gradio/client";
-	import ClearImage from "./ClearImage.svelte";
 	import AnnotationView from "./AnnotationView.svelte";
 	import type { AnnotatedImage } from "./utils";
 
@@ -41,12 +40,17 @@
 
 <div data-testid="image" class="image-container">
 	{#if value?.image.url}
-		<ClearImage
-			on:remove_image={() => {
-				value = null;
-				dispatch("clear");
-			}}
-		/>
+		<IconButtonWrapper>
+			<IconButton
+				Icon={ClearIcon}
+				label="Remove Image"
+				on:click={(event) => {
+					value = null;
+					dispatch("clear");
+					event.stopPropagation();
+				}}
+			/>
+		</IconButtonWrapper>
 	{/if}
 	<div class="upload-container">
 		<Upload

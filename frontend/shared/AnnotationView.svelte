@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { type AnnotatedImage, type Annotation } from "./utils";
+    import { Toolbar, IconButtonWrapper, IconButton } from "@gradio/atoms";
+    import { Sketch, Trash } from "@gradio/icons";
+	import { type AnnotatedImage, type Annotation, clamp } from "./utils";
     import BoxCursor from "./BoxCursor.svelte";
 
 	export let value: null | AnnotatedImage = null;
 	export let interactive: boolean = false;
 
 	// Image coordinates and scale information.
-    // TODO: Maybe keep a transformation matrix only.
 	type ImageRect = {
 		left: number;
 		top: number;
@@ -23,15 +24,18 @@
 		naturalWidth: 1,
 		naturalHeight: 1,
 	};
-    let cursorLeft: number = 0;
-    let cursorTop: number = 0;
-    let cursorRight: number = 0;
-    let cursorBottom: number = 0;
-    let dragging: boolean = false;
+    // Display coordinates of the annotations.
 	let displayAnnotations: Annotation[] = [];
 
-	// Resize observer to the image element position and size.
-	function attachResizeObserver(node: HTMLDivElement) {
+    // Cursor box position in display coordinates.
+    let cursor: BoxCursor;
+
+    // State variables.    
+    let selected: number | null = null;
+    let inserting: boolean = false;
+
+	// Attach resize observer to the image element position and size.
+	function onResize(node: HTMLDivElement) {
 		const resizeObserver = new ResizeObserver(() => {
             const imageElement = node.querySelector('img') as HTMLImageElement;
             imageRect = {
@@ -50,84 +54,143 @@
 	}
 
     // Resize annotations to the display size and positions.
-	function resizeAnnotations(value: AnnotatedImage | null, imageRect: ImageRect) {
+	function updateDisplayAnnotations(value: AnnotatedImage | null, imageRect: ImageRect) {
 		displayAnnotations = value?.annotations.map((annotation) => {
-			const annotationRect = {
+			return {
 				left: annotation.left / imageRect.naturalWidth * imageRect.width + imageRect.left,
 				top: annotation.top / imageRect.naturalHeight * imageRect.height + imageRect.top,
 				right: annotation.right / imageRect.naturalWidth * imageRect.width + imageRect.left,
 				bottom: annotation.bottom / imageRect.naturalHeight * imageRect.height + imageRect.top,
 				label: annotation.label,
 			} as Annotation;
-			return annotationRect;
 		}) || [];
 
         if (selected !== null) {
-            cursorLeft = displayAnnotations[selected].left;
-            cursorTop = displayAnnotations[selected].top;
-            cursorRight = displayAnnotations[selected].right;
-            cursorBottom = displayAnnotations[selected].bottom;
+            cursor.setPosition(displayAnnotations[selected])
         }
 	}
-	$: resizeAnnotations(value, imageRect);
+	$: updateDisplayAnnotations(value, imageRect);
 
     // Select an annotation box and show a cursor box.
-    let selected: number | null = null;
     function onSelect(event: MouseEvent, index: number) {
+        if (inserting) return;
         selected = index;
-        cursorLeft = displayAnnotations[index].left;
-        cursorTop = displayAnnotations[index].top;
-        cursorRight = displayAnnotations[index].right;
-        cursorBottom = displayAnnotations[index].bottom;
+        cursor.setPosition(displayAnnotations[selected])
         event.stopPropagation();
+        cursor.emitCursorMousedown({ clientX: event.clientX, clientY: event.clientY });
     }
-    function onWindowClick() {
+
+    // Add a new annotation box if inserting, otherwise cancel the selection.
+    function onFrameMousedown(event: MouseEvent) {
+        if (!value) return;
+        // Cancel the selection if the click is outside the boxes.
         selected = null;
-    }
-    function onBoxChange() {
-        if (value !== null && selected !== null) {
-            value.annotations[selected].left = Math.round(cursorLeft / imageRect.width * imageRect.naturalWidth);
-            value.annotations[selected].top = Math.round(cursorTop / imageRect.height * imageRect.naturalHeight);
-            value.annotations[selected].right = Math.round(cursorRight / imageRect.width * imageRect.naturalWidth);
-            value.annotations[selected].bottom = Math.round(cursorBottom / imageRect.height * imageRect.naturalHeight);
+        if (!inserting) {
+            return;
         }
+        const frame = event.currentTarget as HTMLDivElement;
+        if (!frame) return;
+
+        const rect = frame.getBoundingClientRect();
+
+        // Add a new annotation box.
+        const newLeft = Math.round((event.clientX - rect.left) / imageRect.width * imageRect.naturalWidth);
+        const newTop = Math.round((event.clientY - rect.top) / imageRect.height * imageRect.naturalHeight);
+        value.annotations.push({
+            left: clamp(newLeft, 0, imageRect.naturalWidth - 1),
+            top: clamp(newTop, 0, imageRect.naturalHeight - 1),
+            right: clamp(newLeft, 0, imageRect.naturalWidth - 1),
+            bottom: clamp(newTop, 0, imageRect.naturalHeight - 1),
+            label: null,  // TODO: Support label.
+        });
+        selected = value.annotations.length - 1;
+        updateDisplayAnnotations(value, imageRect);
+        inserting = false;
+
+        cursor.emitAnchorMousedown("se", { clientX: event.clientX, clientY: event.clientY });
+    }
+
+    // Update the annotation box position when the cursor box changes.
+    function onCursorChange(): void {
+        if (value !== null && selected !== null) {
+            const position = cursor.getPosition();
+            value.annotations[selected].left = Math.round(position.left / imageRect.width * imageRect.naturalWidth);
+            value.annotations[selected].top = Math.round(position.top / imageRect.height * imageRect.naturalHeight);
+            value.annotations[selected].right = Math.round(position.right / imageRect.width * imageRect.naturalWidth);
+            value.annotations[selected].bottom = Math.round(position.bottom / imageRect.height * imageRect.naturalHeight);
+        }
+    }
+
+    // Remove an annotation box.
+    function removeAnnotation(): void {
+        if (value !== null && selected !== null) {
+            value.annotations.splice(selected, 1);
+            selected = null;
+            value = value;
+        }
+    }
+
+    // Switch to the inserting mode.
+    function onClickInsertion(): void {
+        selected = null;
+        inserting = true;
     }
 </script>
 
 {#if value !== null}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div class="image-frame" use:attachResizeObserver on:mousedown={onWindowClick}>
+    <div
+        class="image-frame"
+        class:inserting={interactive && inserting}
+        use:onResize
+        on:mousedown|stopPropagation={onFrameMousedown}
+    >
         <img src={value.image.url} alt="" loading="lazy" />
         {#each displayAnnotations as annotation, index}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
                 class="box-preview"
-                class:selectable={interactive && selected !== index}
+                class:selectable={interactive && selected !== index && !inserting}
                 style:left={annotation.left + "px"}
                 style:top={annotation.top + "px"}
                 style:width={(annotation.right - annotation.left) + "px"}
                 style:height={(annotation.bottom - annotation.top) + "px"}
                 style:display={(selected === index? "none" : "block")}
                 data-label={annotation.label}
-                on:click={(interactive? (event) => onSelect(event, index) : undefined)}
+                on:mousedown={(interactive) ? (event) => onSelect(event, index) : null}
             >
             </div>
         {/each}
-        {#if interactive && selected !== null}
-            <BoxCursor
-                bind:left={cursorLeft}
-                bind:top={cursorTop}
-                bind:right={cursorRight}
-                bind:bottom={cursorBottom}
-                bind:dragging
-                frameWidth={imageRect.width}
-                frameHeight={imageRect.height}
-                on:change={onBoxChange}
-            />
-        {/if}
+        <BoxCursor
+            bind:this={cursor}
+            active={interactive && selected !== null}
+            frameWidth={imageRect.width}
+            frameHeight={imageRect.height}
+            on:change={onCursorChange}
+        />
     </div>
+    {#if interactive}
+        <Toolbar show_border={true}>
+            <IconButton
+                Icon={Sketch}
+                label="Add"
+                size="medium"
+                padded={true}
+                highlight={inserting}
+                on:click={onClickInsertion}
+            />
+            <IconButton
+                Icon={Trash}
+                label="Remove"
+                size="medium"
+                padded={true}
+                disabled={selected === null}
+                on:click={removeAnnotation}
+            />
+        </Toolbar>
+    {/if}
 {/if}
 
 <style>
@@ -153,5 +216,8 @@
     }
     .selectable {
         cursor: pointer;
+    }
+    .inserting {
+        cursor: crosshair;
     }
 </style>
