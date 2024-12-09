@@ -24,6 +24,9 @@
 		naturalWidth: 1,
 		naturalHeight: 1,
 	};
+    let imageFrame: HTMLDivElement;
+    let imageElement: HTMLImageElement;
+
     // Display coordinates of the annotations.
 	let displayAnnotations: Annotation[] = [];
 
@@ -37,7 +40,6 @@
 	// Attach resize observer to the image element position and size.
 	function onResize(node: HTMLDivElement) {
 		const resizeObserver = new ResizeObserver(() => {
-            const imageElement = node.querySelector('img') as HTMLImageElement;
             imageRect = {
                 left: imageElement.offsetLeft,
                 top: imageElement.offsetTop,
@@ -85,15 +87,10 @@
         if (!value) return;
         // Cancel the selection if the click is outside the boxes.
         selected = null;
-        if (!inserting) {
-            return;
-        }
-        const frame = event.currentTarget as HTMLDivElement;
-        if (!frame) return;
+        if (!inserting) return;
 
-        const rect = frame.getBoundingClientRect();
-
-        // Add a new annotation box.
+        // Add a new annotation box on insertion mode.
+        const rect = imageFrame.getBoundingClientRect();
         const newLeft = Math.round((event.clientX - rect.left) / imageRect.width * imageRect.naturalWidth);
         const newTop = Math.round((event.clientY - rect.top) / imageRect.height * imageRect.naturalHeight);
         value.annotations.push({
@@ -114,10 +111,16 @@
     function onCursorChange(): void {
         if (value !== null && selected !== null) {
             const position = cursor.getPosition();
-            value.annotations[selected].left = Math.round(position.left / imageRect.width * imageRect.naturalWidth);
-            value.annotations[selected].top = Math.round(position.top / imageRect.height * imageRect.naturalHeight);
-            value.annotations[selected].right = Math.round(position.right / imageRect.width * imageRect.naturalWidth);
-            value.annotations[selected].bottom = Math.round(position.bottom / imageRect.height * imageRect.naturalHeight);
+            const rect = {
+                left: Math.round((position.left - imageRect.left) / imageRect.width * imageRect.naturalWidth),
+                top: Math.round((position.top - imageRect.top) / imageRect.height * imageRect.naturalHeight),
+                right: Math.round((position.right - imageRect.left) / imageRect.width * imageRect.naturalWidth),
+                bottom: Math.round((position.bottom - imageRect.top) / imageRect.height * imageRect.naturalHeight),
+            }
+            value.annotations[selected].left = clamp(rect.left, 0, imageRect.naturalWidth - 1);
+            value.annotations[selected].top = clamp(rect.top, 0, imageRect.naturalHeight - 1);
+            value.annotations[selected].right = clamp(rect.right, 0, imageRect.naturalWidth - 1);
+            value.annotations[selected].bottom = clamp(rect.bottom, 0, imageRect.naturalHeight - 1);
         }
     }
 
@@ -141,12 +144,13 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div
+        bind:this={imageFrame}
         class="image-frame"
         class:inserting={interactive && inserting}
         use:onResize
         on:mousedown|stopPropagation={onFrameMousedown}
     >
-        <img src={value.image.url} alt="" loading="lazy" />
+        <img bind:this={imageElement} src={value.image.url} alt="" loading="lazy" />
         {#each displayAnnotations as annotation, index}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -198,6 +202,7 @@
 		position: relative;
 		width: 100%;
 		height: 100%;
+        padding: 5px;
 	}
 	.image-frame :global(img) {
 		width: var(--size-full);

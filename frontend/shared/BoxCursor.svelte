@@ -7,6 +7,8 @@
     export let dragging: boolean = false;
     export let active: boolean = false;
 
+    type AnchorLocation = "nw" | "w" | "sw" | "s" | "se" | "e" | "ne" | "n";
+
     let left: number = 0;
     let top: number = 0;
     let right: number = 0;
@@ -24,16 +26,7 @@
     }
 
     let cursorBody: HTMLDivElement | null = null;
-    let anchor: {
-        nw: HTMLDivElement | null;
-        n: HTMLDivElement | null;
-        ne: HTMLDivElement | null;
-        w: HTMLDivElement | null;
-        sw: HTMLDivElement | null;
-        s: HTMLDivElement | null;
-        se: HTMLDivElement | null;
-        e: HTMLDivElement | null;
-    } = {
+    let anchor: { [key in AnchorLocation]: HTMLDivElement | null } = {
         nw: null,
         n: null,
         ne: null,
@@ -86,7 +79,6 @@
 
     // Drag to resize the cursor.
     function onAnchorMousedown(event: MouseEvent, location: string): void {
-        console.log({ left, top, right, bottom, clientX: event.clientX, clientY: event.clientY });
         const startX = event.clientX;
         const startY = event.clientY;
         const startLeft = left;
@@ -155,7 +147,7 @@
         cursorBody?.dispatchEvent(new MouseEvent("mousedown", options));
     }
 
-    export function emitAnchorMousedown(location: "nw" | "w" | "sw" | "s" | "se" | "e" | "ne" | "n", options: any = null): void {
+    export function emitAnchorMousedown(location: AnchorLocation, options: any = null): void {
         anchor[location]?.dispatchEvent(new MouseEvent("mousedown", options));
     }
 </script>
