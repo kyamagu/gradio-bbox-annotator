@@ -7,7 +7,7 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "gradio_imageannotator"
+name = "gradio_bbox_annotator"
 version = "0.1.0"
 description = "Bounding box annotation tool"
 readme = "README.md"
@@ -33,14 +33,14 @@ classifiers = [
 ]
 
 [project.urls]
-repository = "your github repository"
-# space = "your space url"
+repository = "https://github.com/kyamagu/gradio-bbox-annotator"
+space = "https://huggingface.co/spaces/kyamagu/gradio_bbox_annotator"
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
 
 [tool.hatch.build]
-artifacts = ["/backend/gradio_imageannotator/templates", "*.pyi"]
+artifacts = ["/backend/gradio_bbox_annotator/templates", "*.pyi"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["/backend/gradio_imageannotator"]
+packages = ["/backend/gradio_bbox_annotator"]

@@ -9,15 +9,15 @@ pinned: false
 app_file: space.py
 ---
 
-# `gradio_imageannotator`
-<img alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.0.1%20-%20orange">  
+# `gradio_bbox_annotator`
+<img alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.1.0%20-%20orange"> <a href="https://github.com/kyamagu/gradio-bbox-annotator/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> 
 
 Bounding box annotation tool
 
 ## Installation
 
 ```bash
-pip install gradio_imageannotator
+pip install gradio_bbox_annotator
 ```
 
 ## Usage
@@ -25,16 +25,16 @@ pip install gradio_imageannotator
 ```python
 
 import gradio as gr
-from gradio_imageannotator import ImageAnnotator
+from gradio_bbox_annotator import BBoxAnnotator
 
 
-example = ImageAnnotator().example_value()
+example = BBoxAnnotator().example_value()
 
 demo = gr.Interface(
-    lambda x:x,
-    ImageAnnotator(),  # interactive version of your component
-    ImageAnnotator(),  # static version of your component
-    # examples=[[example]],  # uncomment this line to view the "example version" of your component
+    lambda x: x,
+    BBoxAnnotator(value=example, show_label=False),  # interactive version of your component
+    BBoxAnnotator(show_label=False),  # static version of your component
+    examples=[[example]],  # uncomment this line to view the "example version" of your component
 )
 
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
 ```
 
-## `ImageAnnotator`
+## `BBoxAnnotator`
 
 ### Initialization
 
@@ -62,12 +62,31 @@ if __name__ == "__main__":
 <td align="left" style="width: 25%;">
 
 ```python
-str | None
+str
+    | Path
+    | tuple[
+        str | Path,
+        list[tuple[int, int, int, int, str | None]],
+    ]
+    | None
 ```
 
 </td>
 <td align="left"><code>None</code></td>
-<td align="left">A path or URL for the default value that ImageAnnotator component is going to take. If callable, the function will be called whenever the app loads to set the initial value of the component.</td>
+<td align="left">A path or URL for the image, or a tuple of the image and list of (left, top, right, bottom, label) annotations.</td>
+</tr>
+
+<tr>
+<td align="left"><code>categories</code></td>
+<td align="left" style="width: 25%;">
+
+```python
+list[str] | None
+```
+
+</td>
+<td align="left"><code>None</code></td>
+<td align="left">a list of categories to choose from when annotating the image.</td>
 </tr>
 
 <tr>
@@ -132,7 +151,7 @@ bool
 
 </td>
 <td align="left"><code>True</code></td>
-<td align="left">If True, will display button to download image.</td>
+<td align="left">If True, will display button to download annotations.</td>
 </tr>
 
 <tr>
@@ -258,9 +277,9 @@ int | str | None
 
 | name | description |
 |:-----|:------------|
-| `clear` | This listener is triggered when the user clears the ImageAnnotator using the clear button for the component. |
-| `change` | Triggered when the value of the ImageAnnotator changes either because of user input (e.g. a user types in a textbox) OR because of a function update (e.g. an image receives a value from the output of an event trigger). See `.input()` for a listener that is only triggered by user input. |
-| `upload` | This listener is triggered when the user uploads a file into the ImageAnnotator. |
+| `clear` | This listener is triggered when the user clears the BBoxAnnotator using the clear button for the component. |
+| `change` | Triggered when the value of the BBoxAnnotator changes either because of user input (e.g. a user types in a textbox) OR because of a function update (e.g. an image receives a value from the output of an event trigger). See `.input()` for a listener that is only triggered by user input. |
+| `upload` | This listener is triggered when the user uploads a file into the BBoxAnnotator. |
 
 
 
@@ -273,13 +292,20 @@ The impact on the users predict function varies depending on whether the compone
 
 The code snippet below is accurate in cases where the component is used as both an input and an output.
 
-- **As output:** Is passed, a `str` containing the path to the image.
-- **As input:** Should return, expects a `str` or `pathlib.Path` object containing the path to the image.
+- **As output:** Is passed, a tuple of `str` containing the path to the image and a list of annotations.
+- **As input:** Should return, expects a `str` or `pathlib.Path` object containing the path to the image, or a tuple of.
 
  ```python
  def predict(
-     value: str | None
- ) -> str | pathlib._local.Path | None:
+     value: tuple[str, list[tuple[int, int, int, int, str | None]]]
+    | None
+ ) -> str
+    | pathlib.Path
+    | tuple[
+        str | pathlib.Path,
+        list[tuple[int, int, int, int, str | None]],
+    ]
+    | None:
      return value
  ```
  

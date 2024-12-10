@@ -27,7 +27,7 @@ function g(s) {
     },
     h() {
       m(e.src, t = /*value*/
-      s[0].url) || c(e, "src", t), c(e, "alt", ""), c(e, "class", "svelte-giydt1"), c(l, "class", "container svelte-giydt1"), r(
+      s[0].image.url) || c(e, "src", t), c(e, "alt", ""), c(e, "class", "svelte-giydt1"), c(l, "class", "container svelte-giydt1"), r(
         l,
         "table",
         /*type*/
@@ -50,7 +50,7 @@ function g(s) {
     p(i, a) {
       a & /*value*/
       1 && !m(e.src, t = /*value*/
-      i[0].url) && c(e, "src", t), a & /*type*/
+      i[0].image.url) && c(e, "src", t), a & /*type*/
       2 && r(
         l,
         "table",

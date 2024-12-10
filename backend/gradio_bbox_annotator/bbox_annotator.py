@@ -1,4 +1,4 @@
-"""gr.ImageAnnotator() component."""
+"""gr.BboxAnnotator() component."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ class AnnotatedImage(GradioModel):
 
 
 @document()
-class ImageAnnotator(Component):
+class BBoxAnnotator(Component):
     """
     Creates an image component that can be used to upload images with bounding box annotations (as an input)
     or display images with bounding box annotations (as an output). This component can be used to annotate
