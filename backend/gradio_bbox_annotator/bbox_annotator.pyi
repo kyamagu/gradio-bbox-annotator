@@ -1,4 +1,4 @@
-"""gr.BBoxAnnotator() component."""
+"""BBoxAnnotator() component."""
 
 from __future__ import annotations
 
@@ -49,6 +49,8 @@ from gradio.events import Dependency
 @document()
 class BBoxAnnotator(Component):
     """
+    Bounding box annotator component.
+
     Creates an image component that can be used to upload images with bounding box annotations (as an input)
     or display images with bounding box annotations (as an output). This component can be used to annotate
     images.

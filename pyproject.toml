@@ -8,8 +8,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradio_bbox_annotator"
-version = "0.1.0"
-description = "Bounding box annotation tool"
+version = "0.1.1"
+description = "Bounding box annotation tool that supports insertion and editing"
 readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
@@ -22,7 +22,6 @@ classifiers = [
   'Operating System :: OS Independent',
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3 :: Only',
-  'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',

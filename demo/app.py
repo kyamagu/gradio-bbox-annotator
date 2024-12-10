@@ -7,9 +7,9 @@ example = BBoxAnnotator().example_value()
 
 demo = gr.Interface(
     lambda x: x,
-    BBoxAnnotator(value=example, show_label=False),  # interactive version of your component
-    BBoxAnnotator(show_label=False),  # static version of your component
-    examples=[[example]],  # uncomment this line to view the "example version" of your component
+    BBoxAnnotator(value=example, show_label=False),  # input is interactive
+    BBoxAnnotator(show_label=False),  # output is static
+    examples=[[example]],  # examples are in the gallery format
 )
 
 

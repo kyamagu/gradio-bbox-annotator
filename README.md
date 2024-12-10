@@ -1,7 +1,7 @@
 ---
-tags: [gradio-custom-component, SimpleImage, image, annotation, bbox]
-title: gradio_imageannotator
-short_description: Bounding box annotation tool
+tags: [gradio-custom-component, BBoxAnnotator, image, annotation, bbox]
+title: gradio_bbox_annotator
+short_description: Bounding box annotation tool that supports insertion and editing
 colorFrom: blue
 colorTo: yellow
 sdk: gradio
@@ -10,9 +10,9 @@ app_file: space.py
 ---
 
 # `gradio_bbox_annotator`
-<img alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.1.0%20-%20orange"> <a href="https://github.com/kyamagu/gradio-bbox-annotator/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> 
+<a href="https://pypi.org/project/gradio_bbox_annotator/" target="_blank"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/gradio_bbox_annotator"></a> <a href="https://github.com/kyamagu/gradio-bbox-annotator/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> <a href="https://huggingface.co/spaces/kyamagu/gradio_bbox_annotator/discussions" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/%F0%9F%A4%97%20Discuss-%23097EFF?style=flat&logoColor=black"></a>
 
-Bounding box annotation tool
+Bounding box annotation tool that supports insertion and editing
 
 ## Installation
 
@@ -32,9 +32,9 @@ example = BBoxAnnotator().example_value()
 
 demo = gr.Interface(
     lambda x: x,
-    BBoxAnnotator(value=example, show_label=False),  # interactive version of your component
-    BBoxAnnotator(show_label=False),  # static version of your component
-    examples=[[example]],  # uncomment this line to view the "example version" of your component
+    BBoxAnnotator(value=example, show_label=False),  # input is interactive
+    BBoxAnnotator(show_label=False),  # output is static
+    examples=[[example]],  # examples are in the gallery format
 )
 
 
