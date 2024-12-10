@@ -24,7 +24,7 @@ with gr.Blocks(
 <a href="https://pypi.org/project/gradio_bbox_annotator/" target="_blank"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/gradio_bbox_annotator"></a> <a href="https://github.com/kyamagu/gradio-bbox-annotator/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> <a href="https://huggingface.co/spaces/kyamagu/gradio_bbox_annotator/discussions" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/%F0%9F%A4%97%20Discuss-%23097EFF?style=flat&logoColor=black"></a>
 </div>
 
-Bounding box annotation tool that supports insertion and editing
+Bounding box annotation tool for Gradio
 """, elem_classes=["md-custom"], header_links=True)
     app.render()
     gr.Markdown(
