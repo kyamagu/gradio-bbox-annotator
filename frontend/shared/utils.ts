@@ -19,3 +19,7 @@ export type AnnotatedImage = {
 export function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
 }
+
+export function encodeToDataURL(data: any, mimeType: string = "application/json", charset: string = "utf-8"): string {
+	return "data:" + mimeType + ";charset=" + charset + "," + encodeURIComponent(JSON.stringify(data));
+}

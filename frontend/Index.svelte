@@ -30,6 +30,7 @@
 	export let interactive: boolean;
 	export let root: string;
 	export let placeholder: string | undefined = undefined;
+	export let categories: string[] = [];
 
 	export let gradio: Gradio<{
 		change: never;
@@ -100,6 +101,7 @@
 			on:upload={() => gradio.dispatch("upload")}
 			{label}
 			{show_label}
+			{categories}
 		>
 			<UploadText i18n={gradio.i18n} type="image" {placeholder} />
 		</ImageUploader>

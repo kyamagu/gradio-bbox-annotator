@@ -14,6 +14,7 @@
 	export let root: string;
 	export let upload: Client["upload"];
 	export let stream_handler: Client["stream"];
+	export let categories: string[] = [];
 
 	let upload_component: Upload;
 	let uploading = false;
@@ -70,7 +71,7 @@
 			{/if}
 		</Upload>
 		{#if value !== null}
-			<AnnotationView bind:value interactive={true} />
+			<AnnotationView bind:value {categories} interactive={true} />
 		{/if}
 	</div>
 </div>

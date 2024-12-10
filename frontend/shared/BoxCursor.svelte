@@ -2,8 +2,7 @@
 	import { createEventDispatcher } from "svelte";
     import { type Box, clamp } from "./utils";
 
-    export let frameWidth: number = 1;
-    export let frameHeight: number = 1;
+    export let frame: Box;
     export let dragging: boolean = false;
     export let active: boolean = false;
 
@@ -38,7 +37,7 @@
     };
 
 	const dispatch = createEventDispatcher<{
-		change?: { left: number, top: number, right: number, bottom: number };
+		change?: Box;
         drag?: never;
 	}>();
 
@@ -48,27 +47,28 @@
     function onCursorMousedown(event: MouseEvent): void {
         const startX = event.clientX;
         const startY = event.clientY;
-        const startLeft = left;
-        const startTop = top;
-        const startRight = right;
-        const startBottom = bottom;
+        const offset: Box = { left, top, right, bottom };
         const width = right - left;
         const height = bottom - top;
 
         dragging = true;
 
         function onCursorMousemove(event: MouseEvent): void {
-            left = clamp(startLeft + event.clientX - startX, 0, frameWidth - width);
-            top = clamp(startTop + event.clientY - startY, 0, frameHeight - height);
-            right = clamp(startRight + event.clientX - startX, width, frameWidth);
-            bottom = clamp(startBottom + event.clientY - startY, height, frameHeight);
+            const dx = clamp(event.clientX - startX, frame.left - offset.left, frame.right - offset.right);
+            const dy = clamp(event.clientY - startY, frame.top - offset.top, frame.bottom - offset.bottom);
+            left = offset.left + dx;
+            top = offset.top + dy;
+            right = offset.right + dx;
+            bottom = offset.bottom + dy;
             dispatch("change", { left, top, right, bottom });
+            event.preventDefault();
             event.stopPropagation();
         }
         function onCursorMouseup(event: MouseEvent): void {
             // TODO: Case when the cursor is outside the window.
             window.removeEventListener("mousemove", onCursorMousemove);
             window.removeEventListener("mouseup", onCursorMouseup);
+            event.preventDefault();
             event.stopPropagation();
             dragging = false;
         }
@@ -81,10 +81,7 @@
     function onAnchorMousedown(event: MouseEvent, location: string): void {
         const startX = event.clientX;
         const startY = event.clientY;
-        const startLeft = left;
-        const startTop = top;
-        const startRight = right;
-        const startBottom = bottom;
+        const offset = { left, top, right, bottom };
 
         dragging = true;
 
@@ -93,48 +90,50 @@
             const dy = event.clientY - startY;
 
             if (location.includes("w")) {
-                if (startLeft + dx <= startRight) {
-                    left = clamp(startLeft + dx, 0, frameWidth);
+                if (offset.left + dx <= offset.right) {
+                    left = clamp(offset.left + dx, frame.left, frame.right);
                 }
                 else {
-                    left = startRight;
-                    right = clamp(startLeft + dx, 0, frameWidth);
+                    left = offset.right;
+                    right = clamp(offset.left + dx, frame.left, frame.right);
                 }
             }
             else if (location.includes("e")) {
-                if (startRight + dx >= startLeft) {
-                    right = clamp(startRight + dx, 0, frameWidth);
+                if (offset.right + dx >= offset.left) {
+                    right = clamp(offset.right + dx, frame.left, frame.right);
                 }
                 else {
-                    right = startLeft;
-                    left = clamp(startRight + dx, 0, frameWidth);
+                    right = offset.left;
+                    left = clamp(offset.right + dx, frame.left, frame.right);
                 }
             }
 
             if (location.includes("n")) {
-                if (startTop + dy <= startBottom) {
-                    top = clamp(startTop + dy, 0, frameHeight);
+                if (offset.top + dy <= offset.bottom) {
+                    top = clamp(offset.top + dy, frame.top, frame.bottom);
                 }
                 else {
-                    top = startBottom;
-                    bottom = clamp(startTop + dy, 0, frameHeight);
+                    top = offset.bottom;
+                    bottom = clamp(offset.top + dy, frame.top, frame.bottom);
                 }
             }
             else if (location.includes("s")) {
-                if (startBottom + dy >= startTop) {
-                    bottom = clamp(startBottom + dy, 0, frameHeight);
+                if (offset.bottom + dy >= offset.top) {
+                    bottom = clamp(offset.bottom + dy, frame.top, frame.bottom);
                 }
                 else {
-                    bottom = startTop;
-                    top = clamp(startBottom + dy, 0, frameHeight);
+                    bottom = offset.bottom;
+                    top = clamp(offset.bottom + dy, frame.top, frame.bottom);
                 }
             }
             dispatch("change", { left, top, right, bottom });
+            event.preventDefault();
             event.stopPropagation();
         }
         function onAnchorMouseup(event: MouseEvent): void {
             window.removeEventListener("mousemove", onAnchorMousemove);
             window.removeEventListener("mouseup", onAnchorMouseup);
+            event.preventDefault();
             event.stopPropagation();
             dragging = false;
         }
@@ -163,8 +162,8 @@
     style:top={top + "px"}
     style:width={(right - left) + "px"}
     style:height={(bottom - top) + "px"}
-    on:mousedown|stopPropagation={onCursorMousedown}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={onCursorMousedown}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -176,8 +175,8 @@
     style:cursor="nwse-resize"
     style:left={(left - 5) + "px"}
     style:top={(top - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "nw")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "nw")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -189,8 +188,8 @@
     style:cursor="ew-resize"
     style:left={(left - 5) + "px"}
     style:top={((top + bottom) / 2 - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "w")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "w")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -202,8 +201,8 @@
     style:cursor="nesw-resize"
     style:left={(left - 5) + "px"}
     style:top={(bottom - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "sw")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "sw")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -215,8 +214,8 @@
     style:cursor="ns-resize"
     style:left={((left + right) / 2 - 5) + "px"}
     style:top={(bottom - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "s")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "s")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -228,8 +227,8 @@
     style:cursor="nwse-resize"
     style:left={(right - 5) + "px"}
     style:top={(bottom - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "se")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "se")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -241,8 +240,8 @@
     style:cursor="ew-resize"
     style:left={(right - 5) + "px"}
     style:top={((top + bottom) / 2 - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "e")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "e")}
+    on:click|stopPropagation|preventDefault
 ></div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -253,8 +252,8 @@
     style:cursor="nesw-resize"
     style:left={(right - 5) + "px"}
     style:top={(top - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "ne")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "ne")}
+    on:click|stopPropagation|preventDefault
 >
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -266,26 +265,28 @@
     style:cursor="ns-resize"
     style:left={((left + right) / 2 - 5) + "px"}
     style:top={(top - 5) + "px"}
-    on:mousedown|stopPropagation={(event) => onAnchorMousedown(event, "n")}
-    on:click|stopPropagation
+    on:mousedown|stopPropagation|preventDefault={(event) => onAnchorMousedown(event, "n")}
+    on:click|stopPropagation|preventDefault
 ></div>
 
 <style>
     .box-cursor {
         position: absolute;
-        border: 1px solid rgb(0, 127, 255);
+        border-width: 1px;
+        border-style: solid;
+        border-color: var(--box-color, white);
         cursor: move;
+    }
+    .box-cursor:hover {
+        background-color: color-mix(in hsl, var(--box-color) 10%, transparent);
     }
     .inactive {
         display: none;
     }
-    .selectable:hover {
-        background-color: rgba(0, 127, 255, 0.1);
-    }
     .box-anchor {
         position: absolute;
         border: 1px solid white;
-        background-color: rgba(0, 127, 255);
+        background-color: var(--box-color, white);
         width: 10px;
         height: 10px;
     }

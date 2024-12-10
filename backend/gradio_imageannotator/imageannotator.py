@@ -68,6 +68,7 @@ class ImageAnnotator(Component):
         | tuple[str | Path, list[tuple[int, int, int, int, str | None]]]
         | None = None,
         *,
+        categories: list[str] | None = None,
         label: str | None = None,
         every: Timer | float | None = None,
         inputs: Component | Sequence[Component] | set[Component] | None = None,
@@ -86,6 +87,7 @@ class ImageAnnotator(Component):
         """
         Parameters:
             value: A path or URL for the image, or a tuple of the image and list of (left, top, right, bottom, label) annotations.
+            categories: a list of categories to choose from when annotating the image.
             label: the label for this component, displayed above the component if `show_label` is `True` and is also used as the header if there are a table of examples for this component. If None and used in a `gr.Interface`, the label will be the name of the parameter this component corresponds to.
             every: Continously calls `value` to recalculate it if `value` is a function (has no effect otherwise). Can provide a Timer whose tick resets `value`, or a float that provides the regular interval for the reset Timer.
             inputs: Components that are used as inputs to calculate `value` if `value` is a function (has no effect otherwise). `value` is recalculated any time the inputs change.
@@ -102,6 +104,7 @@ class ImageAnnotator(Component):
             key: if assigned, will be used to assume identity across a re-render. Components that have the same key across a re-render will have their value preserved.
         """
         self.show_download_button = show_download_button
+        self.categories = categories or []
         super().__init__(
             label=label,
             every=every,
@@ -169,8 +172,16 @@ class ImageAnnotator(Component):
     def example_payload(self) -> Any:
         return AnnotatedImage(
             image=handle_file(EXAMPLE_IMAGE_URL),
-            annotations=[Annotation(left=10, top=10, right=51, bottom=58, label="bus")],
+            annotations=[
+                Annotation(left=0, top=0, right=60, bottom=67, label="bus"),
+                Annotation(left=29, top=52, right=36, bottom=63, label="wheel"),
+                Annotation(left=50, top=41, right=56, bottom=53, label="wheel"),
+            ],
         )
 
     def example_value(self) -> Any:
-        return (EXAMPLE_IMAGE_URL, [(10, 10, 51, 58, "bus")])
+        return (EXAMPLE_IMAGE_URL, [
+            (0, 0, 60, 67, "bus"),
+            (29, 52, 36, 63, "wheel"),
+            (50, 41, 56, 53, "wheel"),
+        ])
